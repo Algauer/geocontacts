@@ -18,4 +18,9 @@ class EventServiceProvider extends ServiceProvider
             SendAccountDeletedEmail::class,
         ],
     ];
+
+    public function shouldDiscoverEvents(): bool
+    {
+        return false;
+    }
 }
