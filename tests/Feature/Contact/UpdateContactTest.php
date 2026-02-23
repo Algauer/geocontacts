@@ -5,6 +5,7 @@ namespace Tests\Feature\Contact;
 use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -18,6 +19,22 @@ class UpdateContactTest extends TestCase
         Sanctum::actingAs($user);
 
         $contact = Contact::factory()->create(['user_id' => $user->id]);
+
+        Http::fake([
+            'https://maps.googleapis.com/*' => Http::response([
+                'status' => 'OK',
+                'results' => [
+                    [
+                        'geometry' => [
+                            'location' => [
+                                'lat' => -23.5505199,
+                                'lng' => -46.6333094,
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
 
         $response = $this->putJson("/api/contacts/{$contact->id}", [
             'name' => 'Nome Atualizado',

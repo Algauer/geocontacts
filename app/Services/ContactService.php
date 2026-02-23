@@ -4,9 +4,14 @@ namespace App\Services;
 
 use App\Models\Contact;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class ContactService
 {
+    public function __construct(
+        private GeocodingService $geocodingService
+    ) {}
+
     public function list(string $userId, ?string $search = null): LengthAwarePaginator
     {
         $query = Contact::where('user_id', $userId)
@@ -24,8 +29,10 @@ class ContactService
 
     public function create(array $data, string $userId): Contact
     {
+        $payload = $this->resolveCoordinates($data);
+
         return Contact::create([
-            ...$data,
+            ...$payload,
             'user_id' => $userId,
         ]);
     }
@@ -39,7 +46,9 @@ class ContactService
 
     public function update(Contact $contact, array $data): Contact
     {
-        $contact->update($data);
+        $payload = $this->resolveCoordinates($data);
+
+        $contact->update($payload);
 
         return $contact->fresh();
     }
@@ -47,5 +56,32 @@ class ContactService
     public function delete(Contact $contact): void
     {
         $contact->delete();
+    }
+
+    private function resolveCoordinates(array $data): array
+    {
+        if (isset($data['latitude'], $data['longitude'])) {
+            return $data;
+        }
+
+        $coordinates = $this->geocodingService->geocode(
+            $data['street'],
+            $data['number'],
+            $data['district'],
+            $data['city'],
+            $data['state'],
+            $data['cep']
+        );
+
+        if (! $coordinates) {
+            throw ValidationException::withMessages([
+                'address' => 'Nao foi possivel obter coordenadas para o endereco informado.',
+            ]);
+        }
+
+        return [
+            ...$data,
+            ...$coordinates,
+        ];
     }
 }

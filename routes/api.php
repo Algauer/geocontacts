@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -25,4 +26,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Contatos
     Route::apiResource('contacts', ContactController::class);
+    Route::get('/address/search', [AddressController::class, 'search']);
+    Route::get('/address/{cep}', [AddressController::class, 'lookupCep'])->where('cep', '[0-9\-]+');
 });
