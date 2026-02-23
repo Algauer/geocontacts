@@ -1,0 +1,53 @@
+services:
+  # ---- Laravel (PHP-FPM) ----
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: geocontacts-app
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - app-storage:/var/www/html/storage
+    networks:
+      - shared
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ---- Nginx (Reverse Proxy + SSL) ----
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: geocontacts-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - shared
+
+  # ---- Queue Worker (opcional, descomente se usar filas) ----
+  # queue:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: geocontacts-queue
+  #   restart: unless-stopped
+  #   env_file: .env
+  #   command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+  #   volumes:
+  #     - app-storage:/var/www/html/storage
+  #   networks:
+  #     - shared
+
+volumes:
+  app-storage:
+
+networks:
+  shared:
+    external: true

@@ -1,0 +1,118 @@
+name: CI/CD - Build, Test & Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ==========================================
+  # Job 1: Testes
+  # ==========================================
+  test:
+    name: Testes
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: geocontacts_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, pgsql, mbstring, xml, zip, bcmath, intl
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Instalar dependências
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Copiar .env de teste
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Rodar testes
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: geocontacts_test
+          DB_USERNAME: test_user
+          DB_PASSWORD: test_password
+        run: php artisan test
+
+  # ==========================================
+  # Job 2: Deploy (só roda no push para main)
+  # ==========================================
+  deploy:
+    name: Deploy para produção
+    runs-on: self-hosted
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Gerar .env a partir dos secrets
+        run: |
+          cat <<EOF > .env
+          APP_NAME=${{ vars.APP_NAME }}
+          APP_ENV=production
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_DEBUG=false
+          APP_URL=${{ vars.APP_URL }}
+          FRONTEND_URL=${{ vars.FRONTEND_URL }}
+
+          DB_CONNECTION=pgsql
+          DB_HOST=${{ vars.DB_HOST }}
+          DB_PORT=${{ vars.DB_PORT }}
+          DB_DATABASE=${{ vars.DB_DATABASE }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+          SESSION_DRIVER=database
+          SESSION_LIFETIME=120
+          CACHE_STORE=database
+          QUEUE_CONNECTION=database
+
+          LOG_CHANNEL=stderr
+          LOG_LEVEL=error
+
+          SANCTUM_STATEFUL_DOMAINS=${{ vars.SANCTUM_STATEFUL_DOMAINS }}
+
+          MAIL_MAILER=resend
+          MAIL_FROM_ADDRESS=${{ vars.MAIL_FROM_ADDRESS }}
+          MAIL_FROM_NAME=${{ vars.APP_NAME }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+
+          GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+          EOF
+
+      - name: Executar deploy
+        run: bash deploy.sh
