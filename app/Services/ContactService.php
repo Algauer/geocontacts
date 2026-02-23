@@ -12,10 +12,16 @@ class ContactService
         private GeocodingService $geocodingService
     ) {}
 
-    public function list(string $userId, ?string $search = null): LengthAwarePaginator
+    public function list(
+        string $userId,
+        ?string $search = null,
+        string $sortBy = 'name',
+        string $sortDirection = 'asc',
+        int $perPage = 15
+    ): LengthAwarePaginator
     {
         $query = Contact::where('user_id', $userId)
-            ->orderBy('name', 'asc');
+            ->orderBy($sortBy, $sortDirection);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -24,7 +30,7 @@ class ContactService
             });
         }
 
-        return $query->paginate(15);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data, string $userId): Contact

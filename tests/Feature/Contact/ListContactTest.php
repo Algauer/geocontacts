@@ -88,4 +88,46 @@ class ListContactTest extends TestCase
         $this->assertCount(1, $data);
         $this->assertEquals('Contato do User 1', $data[0]['name']);
     }
+
+    public function test_list_supports_sorting_by_created_at_desc(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        Contact::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Contato Antigo',
+            'created_at' => now()->subDays(2),
+        ]);
+        Contact::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Contato Novo',
+            'created_at' => now()->subDay(),
+        ]);
+
+        $response = $this->getJson('/api/contacts?sort_by=created_at&sort_dir=desc');
+
+        $response->assertStatus(200);
+        $names = collect($response->json('data'))->pluck('name')->all();
+
+        $this->assertEquals(['Contato Novo', 'Contato Antigo'], $names);
+    }
+
+    public function test_list_supports_dynamic_pagination_with_per_page_param(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        Contact::factory()->count(6)->create([
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->getJson('/api/contacts?per_page=5&page=1');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('meta.per_page', 5)
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonCount(5, 'data');
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Contact\StoreContactRequest;
 use App\Http\Requests\Contact\UpdateContactRequest;
+use App\Http\Requests\Contact\ListContactRequest;
 use App\Http\Resources\ContactResource;
 use App\Services\ContactService;
 use Illuminate\Http\Request;
@@ -16,11 +17,14 @@ class ContactController extends Controller
         private ContactService $contactService
     ) {}
 
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(ListContactRequest $request): AnonymousResourceCollection
     {
         $contacts = $this->contactService->list(
             $request->user()->id,
-            $request->query('search')
+            $request->query('search'),
+            $request->query('sort_by', 'name'),
+            $request->query('sort_dir', 'asc'),
+            (int) $request->query('per_page', 15)
         );
 
         return ContactResource::collection($contacts);
