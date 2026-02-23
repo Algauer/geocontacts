@@ -17,17 +17,15 @@ services:
       timeout: 5s
       retries: 3
 
-  # ---- Nginx (Reverse Proxy + SSL) ----
+  # ---- Nginx (interno, só para PHP-FPM) ----
   nginx:
     image: nginx:1.25-alpine
     container_name: geocontacts-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8081:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
     networks:
       - shared
 
