@@ -22,7 +22,7 @@ class DeleteContactTest extends TestCase
         $response = $this->deleteJson("/api/contacts/{$contact->id}");
 
         $response->assertStatus(204);
-        $this->assertDatabaseMissing('contacts', ['id' => $contact->id]);
+        $this->assertSoftDeleted('contacts', ['id' => $contact->id]);
     }
 
     public function test_user_cannot_delete_other_users_contact(): void

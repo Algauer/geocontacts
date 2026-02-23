@@ -55,4 +55,21 @@ class LoginTest extends TestCase
         $response->assertStatus(401)
             ->assertJson(['message' => 'Invalid credentials.']);
     }
+
+    public function test_soft_deleted_user_cannot_login(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'joao@example.com',
+            'password' => 'password123',
+        ]);
+        $user->delete();
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'joao@example.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJson(['message' => 'Invalid credentials.']);
+    }
 }
