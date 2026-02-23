@@ -81,38 +81,30 @@ jobs:
 
       - name: Gerar .env a partir dos secrets
         run: |
-          cat <<EOF > .env
-          APP_NAME=${{ vars.APP_NAME }}
-          APP_ENV=production
-          APP_KEY=${{ secrets.APP_KEY }}
-          APP_DEBUG=false
-          APP_URL=${{ vars.APP_URL }}
-          FRONTEND_URL=${{ vars.FRONTEND_URL }}
-
-          DB_CONNECTION=pgsql
-          DB_HOST=${{ vars.DB_HOST }}
-          DB_PORT=${{ vars.DB_PORT }}
-          DB_DATABASE=${{ vars.DB_DATABASE }}
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-
-          SESSION_DRIVER=database
-          SESSION_LIFETIME=120
-          CACHE_STORE=database
-          QUEUE_CONNECTION=database
-
-          LOG_CHANNEL=stderr
-          LOG_LEVEL=error
-
-          SANCTUM_STATEFUL_DOMAINS=${{ vars.SANCTUM_STATEFUL_DOMAINS }}
-
-          MAIL_MAILER=resend
-          MAIL_FROM_ADDRESS=${{ vars.MAIL_FROM_ADDRESS }}
-          MAIL_FROM_NAME=${{ vars.APP_NAME }}
-          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-
-          GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
-          EOF
+          echo "APP_NAME=${{ vars.APP_NAME }}" > .env
+          echo "APP_ENV=production" >> .env
+          echo "APP_KEY=${{ secrets.APP_KEY }}" >> .env
+          echo "APP_DEBUG=false" >> .env
+          echo "APP_URL=${{ vars.APP_URL }}" >> .env
+          echo "FRONTEND_URL=${{ vars.FRONTEND_URL }}" >> .env
+          echo "DB_CONNECTION=pgsql" >> .env
+          echo "DB_HOST=${{ vars.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ vars.DB_PORT }}" >> .env
+          echo "DB_DATABASE=${{ vars.DB_DATABASE }}" >> .env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "SESSION_DRIVER=database" >> .env
+          echo "SESSION_LIFETIME=120" >> .env
+          echo "CACHE_STORE=database" >> .env
+          echo "QUEUE_CONNECTION=database" >> .env
+          echo "LOG_CHANNEL=stderr" >> .env
+          echo "LOG_LEVEL=error" >> .env
+          echo "SANCTUM_STATEFUL_DOMAINS=${{ vars.SANCTUM_STATEFUL_DOMAINS }}" >> .env
+          echo "MAIL_MAILER=resend" >> .env
+          echo "MAIL_FROM_ADDRESS=${{ vars.MAIL_FROM_ADDRESS }}" >> .env
+          echo "MAIL_FROM_NAME=${{ vars.APP_NAME }}" >> .env
+          echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env
+          echo "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> .env
 
       - name: Executar deploy
         run: bash deploy.sh
