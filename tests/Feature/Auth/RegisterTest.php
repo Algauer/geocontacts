@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Mail\WelcomeOnboardingMail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
@@ -80,5 +82,19 @@ class RegisterTest extends TestCase
         $token = $response->json('token');
         $this->assertNotEmpty($token);
         $this->assertIsString($token);
+    }
+
+    public function test_register_sends_welcome_email(): void
+    {
+        Mail::fake();
+
+        $this->postJson('/api/auth/register', [
+            'name' => 'Joao',
+            'email' => 'joao@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertStatus(201);
+
+        Mail::assertSent(WelcomeOnboardingMail::class);
     }
 }
