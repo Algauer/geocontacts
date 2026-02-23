@@ -3,8 +3,10 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Notifications\ResetPasswordMailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
@@ -14,13 +16,16 @@ class PasswordResetTest extends TestCase
 
     public function test_user_can_request_password_reset_link(): void
     {
-        User::factory()->create(['email' => 'joao@example.com']);
+        Notification::fake();
+
+        $user = User::factory()->create(['email' => 'joao@example.com']);
 
         $response = $this->postJson('/api/auth/forgot-password', [
             'email' => 'joao@example.com',
         ]);
 
         $response->assertStatus(200);
+        Notification::assertSentTo($user, ResetPasswordMailNotification::class);
     }
 
     public function test_user_can_reset_password_with_valid_token(): void
