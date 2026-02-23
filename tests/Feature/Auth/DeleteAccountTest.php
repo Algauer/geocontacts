@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Mail\AccountDeletedMail;
 use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -29,6 +31,8 @@ class DeleteAccountTest extends TestCase
 
     public function test_can_delete_account_with_correct_password_and_soft_delete_related_data(): void
     {
+        Mail::fake();
+
         $user = User::factory()->create([
             'password' => 'password123',
         ]);
@@ -46,5 +50,6 @@ class DeleteAccountTest extends TestCase
         $this->assertSoftDeleted('users', ['id' => $user->id]);
         $this->assertSoftDeleted('contacts', ['id' => $contact->id]);
         $this->assertDatabaseCount('personal_access_tokens', 0);
+        Mail::assertSent(AccountDeletedMail::class);
     }
 }

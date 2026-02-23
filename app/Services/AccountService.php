@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\AccountSoftDeleted;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ class AccountService
             $user->contacts()->delete();
             $user->delete();
         });
+
+        event(new AccountSoftDeleted($user->name, $user->email));
     }
 
     public function restoreAccount(string $email, string $password): ?array
