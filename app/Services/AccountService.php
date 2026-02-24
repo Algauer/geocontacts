@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\AccountDeleted;
 use App\Events\AccountSoftDeleted;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -10,15 +11,28 @@ use Illuminate\Support\Facades\Hash;
 
 class AccountService
 {
-    public function deleteUser(User $user): void
+    public function deleteUser(User $user, bool $immediate = false): void
     {
-        DB::transaction(function () use ($user) {
-            $user->tokens()->delete();
-            $user->contacts()->delete();
-            $user->delete();
-        });
+        $name = $user->name;
+        $email = $user->email;
 
-        event(new AccountSoftDeleted($user->name, $user->email));
+        if ($immediate) {
+            DB::transaction(function () use ($user) {
+                $user->contacts()->forceDelete();
+                $user->tokens()->delete();
+                $user->forceDelete();
+            });
+
+            event(new AccountDeleted($name, $email));
+        } else {
+            DB::transaction(function () use ($user) {
+                $user->tokens()->delete();
+                $user->contacts()->delete();
+                $user->delete();
+            });
+
+            event(new AccountSoftDeleted($name, $email));
+        }
     }
 
     public function restoreAccount(string $email, string $password): ?array

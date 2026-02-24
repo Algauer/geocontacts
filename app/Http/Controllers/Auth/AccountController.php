@@ -16,7 +16,10 @@ class AccountController extends Controller
 
     public function destroy(DeleteAccountRequest $request): JsonResponse
     {
-        $this->accountService->deleteUser($request->user());
+        $this->accountService->deleteUser(
+            $request->user(),
+            $request->boolean('immediate'),
+        );
 
         return response()->json(null, 204);
     }
