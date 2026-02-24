@@ -15,6 +15,7 @@ class DeleteAccountRequest extends FormRequest
     {
         return [
             'password' => ['required', 'string', 'current_password'],
+            'immediate' => ['sometimes', 'boolean'],
         ];
     }
 }
